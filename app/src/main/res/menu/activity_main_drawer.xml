@@ -22,10 +22,10 @@
             android:id="@+id/favourite"
             android:icon="@drawable/favourite"
             android:title="Favourite" />
-        <!--item
-            android:id="@+id/e_time"
-            android:icon="@drawable/time"
-            android:title="Exam Time" /-->
+        <item
+            android:id="@+id/downloaded"
+            android:icon="@drawable/ic_action_download"
+            android:title="Offline saved" />
     </group>
 
     <item android:title="Application">

@@ -16,6 +16,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -40,7 +41,10 @@ import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 import com.squareup.picasso.Picasso;
 
+import static android.net.Uri.fromFile;
 import static com.naresh.kingupadhyay.mathsking.CourseDetails.expansionButton;
+import static com.naresh.kingupadhyay.mathsking.CourseDetails.tempFile;
+import static com.naresh.kingupadhyay.mathsking.PDFTools.openPDF;
 
 
 public class Favourites extends AppCompatActivity{
@@ -160,6 +164,8 @@ public class Favourites extends AppCompatActivity{
         private String conceptPdfUrl;
         private String questionPdfUrl;
         private String answerPdfUrl;
+        private String newTexttitle;
+
 
         private String NAME="name";
         private String KEY;
@@ -187,12 +193,19 @@ public class Favourites extends AppCompatActivity{
                 @Override
                 public void onClick(View v) {
                     Context context = v.getContext();
-                    Intent intent = new Intent(context, Basic_activity.class);
-                    intent.putExtra("pdfUrl",conceptPdfUrl);
-                    intent.putExtra("topicN",topic);
-                    intent.putExtra("activity","Favourites");
-                    intent.putExtra("title","Concept:");
-                    context.startActivity(intent);
+                    if ( tempFile(context,"Concept: "+tileText).isFile()) {
+                        // If we have downloaded the file before, just go ahead and show it.
+                        openPDF( context, fromFile( tempFile(context,"Concept: "+tileText) ) );
+                        return;
+                    }else {
+
+                        Intent intent = new Intent(context, Basic_activity.class);
+                        intent.putExtra("pdfUrl", conceptPdfUrl);
+                        intent.putExtra("topicN", topic);
+                        intent.putExtra("titleNoti",tileText);
+                        intent.putExtra("title", "Concept:");
+                        context.startActivity(intent);
+                    }
                 }
             });
             final ImageView question_Imag=(ImageView)itemView.findViewById(R.id.fav_question_image);
@@ -200,12 +213,21 @@ public class Favourites extends AppCompatActivity{
                 @Override
                 public void onClick(View v) {
                     Context context = v.getContext();
-                    Intent intent = new Intent(context, Basic_activity.class);
-                    intent.putExtra("pdfUrl",questionPdfUrl);
-                    intent.putExtra("topicN",topic);
-                    intent.putExtra("title","Question:");
-                    intent.putExtra("activity","Favourites");
-                    context.startActivity(intent);
+                    if(TextUtils.isEmpty(conceptUrl)){
+                        newTexttitle = questionText;
+                    }
+                    if ( tempFile(context,"Question: "+newTexttitle).isFile()) {
+                        // If we have downloaded the file before, just go ahead and show it.
+                        openPDF( context, fromFile( tempFile(context,"Question: "+newTexttitle) ) );
+                        return;
+                    }else {
+                        Intent intent = new Intent(context, Basic_activity.class);
+                        intent.putExtra("pdfUrl", questionPdfUrl);
+                        intent.putExtra("topicN", topic);
+                        intent.putExtra("title", "Question:");
+                        intent.putExtra("titleNoti", newTexttitle);
+                        context.startActivity(intent);
+                    }
                 }
             });
             final ImageView answer_Imag=(ImageView)itemView.findViewById(R.id.fav_answer_image);
@@ -213,12 +235,21 @@ public class Favourites extends AppCompatActivity{
                 @Override
                 public void onClick(View v) {
                     Context context = v.getContext();
-                    Intent intent = new Intent(context, Basic_activity.class);
-                    intent.putExtra("pdfUrl",answerPdfUrl);
-                    intent.putExtra("topicN",topic);
-                    intent.putExtra("activity","Favourites");
-                    intent.putExtra("title","Answer:");
-                    context.startActivity(intent);
+                    if(TextUtils.isEmpty(conceptUrl)){
+                        newTexttitle = questionText;
+                    }
+                    if ( tempFile(context,"Answer: "+newTexttitle).isFile()) {
+                        // If we have downloaded the file before, just go ahead and show it.
+                        openPDF( context, fromFile( tempFile(context,"Answer: "+newTexttitle) ) );
+                        return;
+                        }else {
+                            Intent intent = new Intent(context, Basic_activity.class);
+                            intent.putExtra("pdfUrl", answerPdfUrl);
+                            intent.putExtra("topicN", topic);
+                            intent.putExtra("titleNoti", newTexttitle);
+                            intent.putExtra("title", "Answer:");
+                            context.startActivity(intent);
+                        }
                 }
             });
 
@@ -262,6 +293,7 @@ public class Favourites extends AppCompatActivity{
             tileText=title;
             topic=title;
             KEY = tileText;
+            newTexttitle = title;
             final Activity myActivity=(Activity)(itemView.getContext());
             final SharedPreferences prefs=myActivity.getSharedPreferences(NAME, Context.MODE_PRIVATE);
             SharedPreferences.Editor edt = prefs.edit();

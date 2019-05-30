@@ -1,6 +1,5 @@
 package com.naresh.kingupadhyay.mathsking;
 
-import android.Manifest;
 import android.annotation.TargetApi;
 import android.app.AlertDialog;
 import android.app.DownloadManager;
@@ -15,21 +14,18 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
-import android.support.v4.app.ActivityCompat;
-import android.util.Log;
 import android.widget.Toast;
-import java.io.File;
 
-import static android.content.ContentValues.TAG;
+import java.io.File;
 import static android.net.Uri.*;
 
 public class PDFTools {
 
-    private static final String GOOGLE_DRIVE_PDF_READER_PREFIX = "http://drive.google.com/viewer?url=";
+    //private static final String GOOGLE_DRIVE_PDF_READER_PREFIX = "http://drive.google.com/viewer?url=";
     private static final String PDF_MIME_TYPE = "application/pdf";
     private static final String HTML_MIME_TYPE = "text/html";
-    private static Context context;
-    private static String pdfUrl;
+    private static Basic_activity basic_activity = new Basic_activity();
+    private static long downloadId1;
 
     /**
      * If a PDF reader is installed, download the PDF file and open it in a reader.
@@ -40,13 +36,11 @@ public class PDFTools {
      * @param pdfUrl
      * @return
      */
-    public static void showPDFUrl(final Context context, final String pdfUrl ) {
-     //   PDFTools.context = context;
-       // PDFTools.pdfUrl = pdfUrl;
+    public static void showPDFUrl(final Context context,final String title, final String pdfUrl ) {
         if ( isPDFSupported( context ) ) {
-            downloadAndOpenPDF(context, pdfUrl);
+            downloadAndOpenPDF(context, title, pdfUrl);
         } else {
-            askToOpenPDFThroughGoogleDrive( context, pdfUrl );
+            askToOpenPDFThroughGoogleDrive( context,title, pdfUrl );
         }
     }
 
@@ -64,50 +58,38 @@ public class PDFTools {
      * @param pdfUrl
      */
     @TargetApi(Build.VERSION_CODES.GINGERBREAD)
-    public static void downloadAndOpenPDF(final Context context, final String pdfUrl) {
+    public static void downloadAndOpenPDF(final Context context, final String title,final String pdfUrl) {
         try{
             // Get filename
-            final String filename = pdfUrl.substring( pdfUrl.lastIndexOf( "=" ) + 1 ) + ".pdf";
+            final String filename = title + ".pdf";
+            // download link "https://drive.google.com/uc?export=download&id=1KkFEEsrfNDiG4sfDocvDIrjgLhGEWSvY"
+            final String downloadLink = "https://drive.google.com/uc?export=download&id="+ pdfUrl.substring( pdfUrl.lastIndexOf( "=" ) + 1 );
             // The place where the downloaded PDF file will be put
             final File tempFile = new File( context.getExternalFilesDir( Environment.DIRECTORY_DOWNLOADS ), filename );
-            Toast.makeText(context,filename,Toast.LENGTH_LONG).show();
-            if ( tempFile.exists() ) {
+
+            if ( tempFile.isFile()) {
                 // If we have downloaded the file before, just go ahead and show it.
-                Toast.makeText(context,"start",Toast.LENGTH_LONG).show();
                 openPDF( context, fromFile( tempFile ) );
                 return;
             }
 
-            // Show progress dialog while downloading
-            final ProgressDialog progDailog = new ProgressDialog(context);
-            progDailog.setTitle("Data Loading....");
-            progDailog.setMessage("Please Wait.....");
-            progDailog.setCancelable(false);
-            progDailog.setButton(DialogInterface.BUTTON_NEGATIVE, "Cancel", new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-                    dialog.dismiss();
-                }
-            });
-            progDailog.show();           // Create the download request
-            DownloadManager.Request request = new DownloadManager.Request(Uri.parse(pdfUrl));
-            request.setDescription("Some descrition");
-            request.setTitle("Some title");
-// in order for this if to run, you must use the android 3.2 to compile your app
+          // Create the download request
+            DownloadManager.Request request = new DownloadManager.Request(Uri.parse(downloadLink));
+            request.setDescription("wait ...");
+            request.setTitle(title);
+            // in order for this if to run, you must use the android 3.2 to compile your app
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
                 request.allowScanningByMediaScanner();
                 request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
             }
-            request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, filename);
+            request.setDestinationInExternalFilesDir(context,Environment.DIRECTORY_DOWNLOADS, filename);
 
-// get download service and enqueue file
+            // get download service and enqueue file
             final DownloadManager manager = (DownloadManager) context.getSystemService(Context.DOWNLOAD_SERVICE);
-            /*
-            DownloadManager.Request r = new DownloadManager.Request( parse( pdfUrl ) );
-            r.setDestinationInExternalFilesDir( context, Environment.DIRECTORY_DOWNLOADS, filename );
-            Toast.makeText(context,Environment.DIRECTORY_DOWNLOADS,Toast.LENGTH_LONG).show();
-            final DownloadManager dm = (DownloadManager) context.getSystemService( Context.DOWNLOAD_SERVICE );*/
-            Toast.makeText(context,"Download Manager",Toast.LENGTH_LONG).show();
+
+            // Show progress dialog while downloading
+            final ProgressDialog progDailog = new ProgressDialog(context);
+            //Toast.makeText(context,"Download Manager",Toast.LENGTH_LONG).show();
             BroadcastReceiver onComplete = new BroadcastReceiver() {
                 @Override
                 public void onReceive(Context context, Intent intent) {
@@ -119,29 +101,37 @@ public class PDFTools {
                     progDailog.dismiss();
                     long downloadId = intent.getLongExtra( DownloadManager.EXTRA_DOWNLOAD_ID, -1 );
                     Cursor c = manager.query( new DownloadManager.Query().setFilterById( downloadId ) );
-
+                    downloadId1=downloadId;
                     if ( c.moveToFirst() ) {
                         int status = c.getInt( c.getColumnIndex( DownloadManager.COLUMN_STATUS ) );
                         if ( status == DownloadManager.STATUS_SUCCESSFUL ) {
-                            openPDF( context, fromFile( tempFile ) );
-                            Toast.makeText(context,"Downloading start",Toast.LENGTH_LONG).show();
+                            Toast.makeText(context, "Offline saved", Toast.LENGTH_SHORT).show();
+                            openPDF( context, fromFile( tempFile) );
                         }
                     }
                     c.close();
                 }
             };
-            context.registerReceiver( onComplete, new IntentFilter( DownloadManager.ACTION_DOWNLOAD_COMPLETE ) );
 
-            // Enqueue the request
-            //dm.enqueue( r );
+            context.registerReceiver( onComplete, new IntentFilter( DownloadManager.ACTION_DOWNLOAD_COMPLETE ) );
             manager.enqueue(request);
 
-            Toast.makeText(context,"Downloading complete",Toast.LENGTH_LONG).show();
-        }catch (Exception ex){
-            Toast.makeText(context,ex.getMessage(),Toast.LENGTH_LONG).show();
-        }finally {
-            Toast.makeText(context,"finally",Toast.LENGTH_LONG).show();
+            progDailog.setTitle("Data Downloading....");
+            progDailog.setMessage("Please Wait.....");
+            progDailog.setCancelable(false);
+            progDailog.setButton(DialogInterface.BUTTON_NEGATIVE, "Cancel", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    manager.remove(downloadId1);//todo progress bar cancelling progress
+                    dialog.dismiss();
 
+                }
+            });
+            progDailog.show();
+
+
+        }catch (Exception ex){
+        }finally {
         }
     }
 
@@ -150,9 +140,9 @@ public class PDFTools {
      * @param context
      * @param pdfUrl
      */
-    public static void askToOpenPDFThroughGoogleDrive( final Context context, final String pdfUrl ) {
+    public static void askToOpenPDFThroughGoogleDrive( final Context context,final String title, final String pdfUrl ) {
         new AlertDialog.Builder( context )
-                .setTitle( R.string.pdf_show_online_dialog_title )
+                .setTitle( title )
                 .setMessage( R.string.pdf_show_online_dialog_question )
                 .setNegativeButton( R.string.pdf_show_online_dialog_button_no, null )
                 .setPositiveButton( R.string.pdf_show_online_dialog_button_yes, new DialogInterface.OnClickListener() {
@@ -172,7 +162,7 @@ public class PDFTools {
     public static void openPDFThroughGoogleDrive(final Context context, final String pdfUrl) {
 
         Intent i = new Intent( Intent.ACTION_VIEW );
-        i.setDataAndType(parse(GOOGLE_DRIVE_PDF_READER_PREFIX + pdfUrl ), HTML_MIME_TYPE );
+        i.setDataAndType(parse(pdfUrl ), HTML_MIME_TYPE );
         context.startActivity( i );
     }
     /**

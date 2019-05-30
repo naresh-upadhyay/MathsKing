@@ -10,5 +10,7 @@
     <color name="app_background">#3d414d</color>
     <color name="red">#ff0000</color>
 
+    <color name="black_overlay">#66000000</color>
+
 
 </resources>

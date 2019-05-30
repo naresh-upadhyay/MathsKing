@@ -13,6 +13,7 @@ import android.graphics.drawable.Drawable;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
+import android.os.Environment;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
@@ -45,6 +46,12 @@ import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 import com.squareup.picasso.Callback;
 import com.squareup.picasso.Picasso;
+
+import java.io.File;
+
+import static android.net.Uri.fromFile;
+import static com.naresh.kingupadhyay.mathsking.CourseDetails.mChapterViewHolder.context1;
+import static com.naresh.kingupadhyay.mathsking.PDFTools.openPDF;
 
 public class CourseDetails extends AppCompatActivity{
 
@@ -181,11 +188,21 @@ public class CourseDetails extends AppCompatActivity{
                 @Override
                 public void onClick(View v) {
                     Context context = v.getContext();
-                    Intent intent = new Intent(context, Basic_activity.class);
-                    intent.putExtra("pdfUrl",conceptPdfUrl);
-                    intent.putExtra("topicN",topic);
-                    intent.putExtra("title","Concept:");//activity
-                    context.startActivity(intent);
+
+                    if ( tempFile(context,"Concept: "+tileText).isFile()) {
+                        // If we have downloaded the file before, just go ahead and show it.
+                        openPDF( context, fromFile( tempFile(context,"Concept: "+tileText) ) );
+                        return;
+                    }else{
+
+                        Intent intent = new Intent(context, Basic_activity.class);
+                        intent.putExtra("pdfUrl",conceptPdfUrl);
+                        intent.putExtra("topicN",topic);
+                        intent.putExtra("titleNoti",tileText);
+                        intent.putExtra("title","Concept:");//activity
+                        context.startActivity(intent);
+                    }
+
                 }
             });
             final ImageView question_Imag=(ImageView)itemView.findViewById(R.id.question_image);
@@ -193,11 +210,19 @@ public class CourseDetails extends AppCompatActivity{
                 @Override
                 public void onClick(View v) {
                     Context context = v.getContext();
-                    Intent intent = new Intent(context, Basic_activity.class);
-                    intent.putExtra("pdfUrl",questionPdfUrl);
-                    intent.putExtra("topicN",topic);
-                    intent.putExtra("title","Question:");
-                    context.startActivity(intent);
+
+                    if ( tempFile(context,"Question: "+tileText).isFile()) {
+                        // If we have downloaded the file before, just go ahead and show it.
+                        openPDF( context, fromFile( tempFile(context,"Question: "+tileText) ) );
+                        return;
+                    }else {
+                        Intent intent = new Intent(context, Basic_activity.class);
+                        intent.putExtra("pdfUrl", questionPdfUrl);
+                        intent.putExtra("topicN", topic);
+                        intent.putExtra("titleNoti", tileText);
+                        intent.putExtra("title", "Question:");
+                        context.startActivity(intent);
+                    }
                 }
             });
             final ImageView answer_Imag=(ImageView)itemView.findViewById(R.id.answer_image);
@@ -205,11 +230,19 @@ public class CourseDetails extends AppCompatActivity{
                 @Override
                 public void onClick(View v) {
                     Context context = v.getContext();
-                    Intent intent = new Intent(context, Basic_activity.class);
-                    intent.putExtra("pdfUrl",answerPdfUrl);
-                    intent.putExtra("topicN",topic);
-                    intent.putExtra("title","Answer:");
-                    context.startActivity(intent);
+
+                    if ( tempFile(context,"Answer: "+tileText).isFile()) {
+                        // If we have downloaded the file before, just go ahead and show it.
+                        openPDF( context, fromFile( tempFile(context,"Answer: "+tileText) ) );
+                        return;
+                    }else {
+                        Intent intent = new Intent(context, Basic_activity.class);
+                        intent.putExtra("pdfUrl", answerPdfUrl);
+                        intent.putExtra("topicN", topic);
+                        intent.putExtra("titleNoti", tileText);
+                        intent.putExtra("title", "Answer:");
+                        context.startActivity(intent);
+                    }
                 }
             });
 
@@ -473,6 +506,15 @@ public class CourseDetails extends AppCompatActivity{
                 });
     }
 
+
+    public static File tempFile(Context context,String pdfUrl){
+
+        // Get filename
+        final String filename = pdfUrl.substring( pdfUrl.lastIndexOf( "=" ) + 1 ) + ".pdf";
+        // The place where the downloaded PDF file will be put
+        final File tempFile1 = new File( context.getExternalFilesDir( Environment.DIRECTORY_DOWNLOADS ), filename );
+        return tempFile1;
+    }
 
     @Override
     public void onBackPressed(){

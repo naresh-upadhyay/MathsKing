@@ -46,6 +46,10 @@ import com.google.firebase.database.ValueEventListener;
 import com.squareup.picasso.Callback;
 import com.squareup.picasso.Picasso;
 
+import static android.net.Uri.fromFile;
+import static com.naresh.kingupadhyay.mathsking.CourseDetails.tempFile;
+import static com.naresh.kingupadhyay.mathsking.PDFTools.openPDF;
+
 public class Question_bank extends AppCompatActivity{
 
     private Toolbar toolbar;
@@ -177,11 +181,20 @@ public class Question_bank extends AppCompatActivity{
                 @Override
                 public void onClick(View v) {
                     Context context = v.getContext();
-                    Intent intent = new Intent(context, Basic_activity.class);
-                    intent.putExtra("pdfUrl",questionPdfUrl);
-                    intent.putExtra("topicN",topic);
-                    intent.putExtra("title","Question:");
-                    context.startActivity(intent);
+
+                    if ( tempFile(context,"Question: " + questionText).isFile()) {
+                        // If we have downloaded the file before, just go ahead and show it.
+                        openPDF( context, fromFile( tempFile(context,"Question: " + questionText) ) );
+                        return;
+                    }else {
+
+                        Intent intent = new Intent(context, Basic_activity.class);
+                        intent.putExtra("pdfUrl", questionPdfUrl);
+                        intent.putExtra("topicN", topic);
+                        intent.putExtra("titleNoti",questionText);
+                        intent.putExtra("title", "Question:");
+                        context.startActivity(intent);
+                    }
                 }
             });
             final ImageView answer_Imag=(ImageView)itemView.findViewById(R.id.answer_image);
@@ -189,11 +202,19 @@ public class Question_bank extends AppCompatActivity{
                 @Override
                 public void onClick(View v) {
                     Context context = v.getContext();
-                    Intent intent = new Intent(context, Basic_activity.class);
-                    intent.putExtra("pdfUrl",answerPdfUrl);
-                    intent.putExtra("topicN",topic);
-                    intent.putExtra("title","Answer:");
-                    context.startActivity(intent);
+
+                    if ( tempFile(context,"Answer: " + questionText).isFile()) {
+                        // If we have downloaded the file before, just go ahead and show it.
+                        openPDF( context, fromFile( tempFile(context,"Answer: " + questionText) ) );
+                        return;
+                    }else {
+                        Intent intent = new Intent(context, Basic_activity.class);
+                        intent.putExtra("pdfUrl", answerPdfUrl);
+                        intent.putExtra("titleNoti",questionText);
+                        intent.putExtra("topicN", topic);
+                        intent.putExtra("title", "Answer:");
+                        context.startActivity(intent);
+                    }
                 }
             });
 

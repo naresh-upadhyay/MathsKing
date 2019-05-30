@@ -46,6 +46,10 @@ import com.google.firebase.database.ValueEventListener;
 import com.squareup.picasso.Callback;
 import com.squareup.picasso.Picasso;
 
+import static android.net.Uri.fromFile;
+import static com.naresh.kingupadhyay.mathsking.CourseDetails.tempFile;
+import static com.naresh.kingupadhyay.mathsking.PDFTools.openPDF;
+
 public class Short_note extends AppCompatActivity{
 
     private Toolbar toolbar;
@@ -173,11 +177,19 @@ public class Short_note extends AppCompatActivity{
                 @Override
                 public void onClick(View v) {
                     Context context = v.getContext();
-                    Intent intent = new Intent(context, Basic_activity.class);
-                    intent.putExtra("pdfUrl",conceptPdfUrl);
-                    intent.putExtra("topicN",topic);
-                    intent.putExtra("title","Concept:");//activity
-                    context.startActivity(intent);
+                    if ( tempFile(context,"Concept: "+tileText).isFile()) {
+                        // If we have downloaded the file before, just go ahead and show it.
+                        openPDF( context, fromFile( tempFile(context,"Concept: "+tileText) ) );
+                        return;
+                    }else {
+
+                        Intent intent = new Intent(context, Basic_activity.class);
+                        intent.putExtra("pdfUrl", conceptPdfUrl);
+                        intent.putExtra("topicN", topic);
+                        intent.putExtra("titleNoti",tileText);
+                        intent.putExtra("title", "Concept:");//activity
+                        context.startActivity(intent);
+                    }
                 }
             });
 
